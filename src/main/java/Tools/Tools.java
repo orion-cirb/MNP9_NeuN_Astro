@@ -5,7 +5,6 @@ import StardistOrion.StarDist2D;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.WaitForUserDialog;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.plugin.RGBStackMerge;
@@ -51,8 +50,8 @@ public class Tools {
     public boolean canceled = true;
     public double minNucVol= 50;
     public double maxNucVol = Double.MAX_VALUE;
-    public double minDotVol= 0.004;
-    public double maxDotVol = 1;
+    public double minDotVol = 0;
+    public double maxDotVol = Double.MAX_VALUE;
     private String thMethod = "Li";
     public Calibration cal;
     
@@ -85,39 +84,23 @@ public class Tools {
         return(models);
     } 
     
-    /**
-     * return objects population in an binary image
-     * Using CLIJ2
-     * @param imgCL
-     * @return pop
-     */
-
-    public Objects3DPopulation getPopFromClearBuffer(ClearCLBuffer imgCL, Calibration cal) {
-        ClearCLBuffer output = clij2.create(imgCL);
-        clij2.connectedComponentsLabelingBox(imgCL, output);
-        clij2.release(imgCL);
-        clij2.show(output, "test");
-        new WaitForUserDialog(thMethod).show();
-        ImageHandler imh = ImageHandler.wrap(clij2.pull(output));
-        clij2.release(output);
-        imh.setCalibration(cal);
-        Objects3DPopulation pop = new Objects3DPopulation(imh);
-        return pop;
-    }
-    
      /**
-     * return objects population in an binary image
-     * @param img
+     * return objects population in an ClearBuffer image
+     * @param imgCL
      * @return pop objects population
      */
 
-    public Objects3DPopulation getPopFromImage(ImagePlus img) {
-        // label binary images first
-        ImageLabeller labeller = new ImageLabeller();
-        ImageFloat labels = labeller.getLabelsFloat(ImageHandler.wrap(img));
-        ArrayList<Object3D> pop = new Objects3DPopulation(labels).getObjectsWithinVolume(minDotVol, maxDotVol, true);
-        return(new Objects3DPopulation(pop));
+    public Objects3DPopulation getPopFromClearBuffer(ClearCLBuffer imgCL) {
+        ClearCLBuffer labels = clij2.create(imgCL.getWidth(), imgCL.getHeight(), imgCL.getDepth());
+        boolean connectedComponentsLabelingBox = clij2.connectedComponentsLabelingBox(imgCL, labels);
+        // filter size
+        ClearCLBuffer labelsSizeFilter = clij2.create(imgCL.getWidth(), imgCL.getHeight(), imgCL.getDepth());
+        clij2.excludeLabelsOutsideSizeRange(labels, labelsSizeFilter, minDotVol, maxDotVol);
+        ImageHandler imh = ImageHandler.wrap(clij2.pull(labelsSizeFilter));
+        Objects3DPopulation pop = new Objects3DPopulation(imh);
+        return(pop);
     }  
+    
     
     
     public int[] dialog(String[] chs, String[] channelNames, boolean th) {
@@ -364,15 +347,15 @@ public class Tools {
     * Find Astrocyte
     */
     public Objects3DPopulation findAstrocytePop(ImagePlus img) {
+        IJ.showStatus("Finding astrocyte");
         ClearCLBuffer imgCL = clij2.push(img);
         ClearCLBuffer imgMed = median_filter(imgCL, 2, 2);
         clij2.release(imgCL);
         ClearCLBuffer imgCLBin = threshold(imgMed, thMethod);
         clij2.release(imgMed);
-        ImagePlus imgBin = clij2.pull(imgCLBin);
-        imgBin.setCalibration(cal);
-        Objects3DPopulation astroPop = getPopFromImage(imgBin);
-        flush_close(imgBin);
+        Objects3DPopulation astroPop = getPopFromClearBuffer(imgCLBin);
+        astroPop.setCalibration(cal.pixelWidth, cal.pixelDepth, cal.getUnit());
+        clij2.release(imgCLBin);
         return(astroPop);
     }    
     
@@ -382,18 +365,19 @@ public class Tools {
      * @return 
      */
      public Objects3DPopulation findDots(ImagePlus imgDot, Objects3DPopulation nucPop) {
+        IJ.showStatus("Finding dots");
         ClearCLBuffer imgCL = clij2.push(imgDot);
         ClearCLBuffer imgDOG = DOG(imgCL, 1, 2);
         clij2.release(imgCL);
         ClearCLBuffer imgCLBin = threshold(imgDOG, "Moments");
         clij2.release(imgDOG);
         ImagePlus imgBin = clij2.pull(imgCLBin);
+        clij2.release(imgCLBin);
         imgBin.setCalibration(cal);
-        imgBin.show();
-        new WaitForUserDialog(thMethod).show();
         if (nucPop != null)
             nucPop.draw(imgBin.getImageStack(), 0);
-        Objects3DPopulation dotsPop = getPopFromClearBuffer(imgCLBin, cal);
+        Objects3DPopulation dotsPop = getPopFromClearBuffer(clij2.push(imgBin));
+        dotsPop.setCalibration(cal.pixelWidth, cal.pixelDepth, cal.getUnit());
         flush_close(imgBin);
         return(dotsPop);
      }
@@ -422,7 +406,7 @@ public class Tools {
                 dotsCellPop.addObject(p.getObject3D1());
         }
         dotsCellPop.setCalibration(cal.pixelWidth, cal.pixelDepth, cal.getUnit());
-        return(dotsCellPop);
+        return(dotsPop);
     }
     
     /**
