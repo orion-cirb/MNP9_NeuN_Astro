@@ -5,7 +5,6 @@ import StardistOrion.StarDist2D;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.WaitForUserDialog;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.plugin.RGBStackMerge;
@@ -18,14 +17,12 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import javax.swing.ImageIcon;
 import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
 import loci.formats.FormatException;
 import loci.formats.meta.IMetadata;
 import loci.plugins.util.ImageProcessorReader;
-import mcib3d.geom.Object3D;
 import mcib3d.geom2.Object3DInt;
 import mcib3d.geom2.Objects3DIntPopulation;
 import mcib3d.geom2.measurements.MeasureIntensity;
@@ -33,7 +30,6 @@ import mcib3d.geom2.measurements.MeasureVolume;
 import mcib3d.geom2.measurementsPopulation.MeasurePopulationColocalisation;
 import mcib3d.image3d.ImageHandler;
 import mcib3d.image3d.ImageInt;
-import mcib3d.image3d.ImageLabeller;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import net.haesleinhuepf.clij2.CLIJ2;
 import org.apache.commons.io.FilenameUtils;
@@ -96,7 +92,7 @@ public class Tools {
 
     public Objects3DIntPopulation getPopFromClearBuffer(ClearCLBuffer imgCL) {
         ClearCLBuffer labels = clij2.create(imgCL.getWidth(), imgCL.getHeight(), imgCL.getDepth());
-        boolean connectedComponentsLabelingBox = clij2.connectedComponentsLabelingBox(imgCL, labels);
+        clij2.connectedComponentsLabelingBox(imgCL, labels);
         // filter size
         ClearCLBuffer labelsSizeFilter = clij2.create(imgCL.getWidth(), imgCL.getHeight(), imgCL.getDepth());
         clij2.release(imgCL);
@@ -320,21 +316,55 @@ public class Tools {
         return(imgCLDOG);
     }
     
+//     /**
+//     * Find volume of objects  
+//     * @param dotsPop
+//     * @return vol
+//     */
+//    
+//    public Double findDotsVolume (Objects3DIntPopulation dotsPop) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+//        IJ.showStatus("Findind object's volume");
+//        Double vol = 0.0;
+//        List<Double[]> measurements = dotsPop.getMeasurements(new MeasureVolume().getClass());
+//        for (Double[] me : measurements) {
+//            vol += me[2];
+//        }
+//        return(vol);
+//    }
+    
      /**
      * Find volume of objects  
      * @param dotsPop
      * @return vol
      */
     
-    public Double findDotsVolume (Objects3DIntPopulation dotsPop) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public Double findDotsVolume (Objects3DIntPopulation dotsPop) {
         IJ.showStatus("Findind object's volume");
         Double vol = 0.0;
-        List<Double[]> measurements = dotsPop.getMeasurements(new MeasureVolume().getClass());
-        for (Double[] me : measurements) {
-            vol += me[2];
+        for (Object3DInt dot : dotsPop.getObjects3DInt()) {
+            MeasureVolume measureVol = new MeasureVolume(dot);
+            vol = vol + measureVol.getVolumeUnit();
         }
         return(vol);
     }
+    
+//     /**
+//     * Find sum intensity of objects  
+//     * @param dotsPop
+//     * @param img
+//     * @return intensity
+//     */
+//    
+//    public Double findDotsIntensity (Objects3DIntPopulation dotsPop, ImagePlus img) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException{
+//        IJ.showStatus("Findind object's intensity");
+//        Double intensity = 0.0;
+//        ImageHandler imh = ImageHandler.wrap(img);
+//        List<Double[]> measurements = dotsPop.getMeasurementsIntensity(new MeasureIntensity().getClass(), imh);
+//        for (Double[] me : measurements) {
+//            intensity += me[5];
+//        }
+//        return(intensity);
+//    }
     
      /**
      * Find sum intensity of objects  
@@ -347,9 +377,9 @@ public class Tools {
         IJ.showStatus("Findind object's intensity");
         Double intensity = 0.0;
         ImageHandler imh = ImageHandler.wrap(img);
-        List<Double[]> measurements = dotsPop.getMeasurementsIntensity(new MeasureIntensity().getClass(), imh);
-        for (Double[] me : measurements) {
-            intensity += me[5];
+        for (Object3DInt dot : dotsPop.getObjects3DInt()) {
+            MeasureIntensity measureInt = new MeasureIntensity(dot, imh);
+            intensity = intensity + measureInt.getValueMeasurement(MeasureIntensity.INTENSITY_SUM);
         }
         return(intensity);
     }
