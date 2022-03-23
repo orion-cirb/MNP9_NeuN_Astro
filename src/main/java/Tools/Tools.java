@@ -16,6 +16,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import javax.swing.ImageIcon;
 import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
@@ -26,10 +27,11 @@ import mcib3d.geom.Object3D;
 import mcib3d.geom.Objects3DPopulation;
 import mcib3d.geom.Objects3DPopulationColocalisation;
 import mcib3d.geom.PairColocalisationOld;
-import mcib3d.image3d.ImageFloat;
+import mcib3d.geom2.Objects3DIntPopulation;
+import mcib3d.geom2.measurementsPopulation.MeasurePopulationColocalisation;
+import mcib3d.geom2.measurementsPopulation.PairObjects3DInt;
 import mcib3d.image3d.ImageHandler;
 import mcib3d.image3d.ImageInt;
-import mcib3d.image3d.ImageLabeller;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import net.haesleinhuepf.clij2.CLIJ2;
 import org.apache.commons.io.FilenameUtils;
@@ -50,7 +52,7 @@ public class Tools {
     public boolean canceled = true;
     public double minNucVol= 50;
     public double maxNucVol = Double.MAX_VALUE;
-    public double minDotVol = 0;
+    public double minDotVol = 1;
     public double maxDotVol = Double.MAX_VALUE;
     private String thMethod = "Li";
     public Calibration cal;
@@ -98,6 +100,10 @@ public class Tools {
         clij2.excludeLabelsOutsideSizeRange(labels, labelsSizeFilter, minDotVol, maxDotVol);
         ImageHandler imh = ImageHandler.wrap(clij2.pull(labelsSizeFilter));
         Objects3DPopulation pop = new Objects3DPopulation(imh);
+        imh.closeImagePlus();
+        clij2.release(imgCL);
+        clij2.release(labels);
+        clij2.release(labelsSizeFilter);
         return(pop);
     }  
     
@@ -115,8 +121,8 @@ public class Tools {
             index++;
         }
         gd.addMessage("--- Dots filter size ---", Font.getFont(Font.MONOSPACED), Color.blue);
-        gd.addNumericField("Min. volume size : ", minDotVol, 3);
-        gd.addNumericField("Max. volume size : ", maxDotVol, 3);
+        gd.addNumericField("Min. volume size (voxels) : ", minDotVol, 3);
+        gd.addNumericField("Max. volume size (voxels) : ", maxDotVol, 3);
         gd.addMessage("StarDist model", Font.getFont("Monospace"), Color.blue);
         if (models.length > 0) {
             gd.addChoice("StarDist model :",models, models[0]);
@@ -408,6 +414,7 @@ public class Tools {
         dotsCellPop.setCalibration(cal.pixelWidth, cal.pixelDepth, cal.getUnit());
         return(dotsPop);
     }
+    
     
     /**
      * Find dots outside nucleus
