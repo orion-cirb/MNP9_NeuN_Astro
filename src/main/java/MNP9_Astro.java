@@ -92,7 +92,7 @@ public class MNP9_Astro implements PlugIn {
             String header= "Image Name\tSection volume (µm3)\t#Nucleus\t#MNP9\tVol MNP9\tIntensity MNP9\t#MNP9 in nucleus\tVol MNP9 in Nucleus\tintensity MNP9 in Nucleus"
                     + "\tAstrocyte volume\t#MNP9 in astrocyte\tVol MNP9 in astrocyte\tIntensity MNP9 in astrocyte\t#MNP9 outside nucleus\tVol MNP9 outside nucleus\tIntensity MNP9 outside nucleus\t"
                     + "#MNP9 outside astrocyte\tVol MNP9 outside astrocyte\tIntensity MNP9 outside astrocyte#MNP9 outside cells\tVol MNP9 outside cells\tIntensity MNP9 outside cells\n";
-            FileWriter fwNucleusGlobal = new FileWriter(outDirResults + "MNP9_Results.xls", false);
+            FileWriter fwNucleusGlobal = new FileWriter(outDirResults + "Astro_Results.xls", false);
             nucleus_Analyze = new BufferedWriter(fwNucleusGlobal);
             nucleus_Analyze.write(header);
             nucleus_Analyze.flush();

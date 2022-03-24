@@ -5,10 +5,14 @@ import StardistOrion.StarDist2D;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.WaitForUserDialog;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
+import ij.measure.ResultsTable;
 import ij.plugin.RGBStackMerge;
 import ij.process.AutoThresholder;
+import ij.util.ThreadUtil;
+import ij3d.behaviors.WaitForNextFrameBehavior;
 import java.awt.Color;
 import java.awt.Font;
 import java.io.File;
@@ -17,6 +21,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.ImageIcon;
 import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
@@ -25,9 +31,11 @@ import loci.formats.meta.IMetadata;
 import loci.plugins.util.ImageProcessorReader;
 import mcib3d.geom2.Object3DInt;
 import mcib3d.geom2.Objects3DIntPopulation;
+import mcib3d.geom2.measurements.Measure2Colocalisation;
 import mcib3d.geom2.measurements.MeasureIntensity;
 import mcib3d.geom2.measurements.MeasureVolume;
 import mcib3d.geom2.measurementsPopulation.MeasurePopulationColocalisation;
+import mcib3d.image3d.ImageByte;
 import mcib3d.image3d.ImageHandler;
 import mcib3d.image3d.ImageInt;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
@@ -309,28 +317,26 @@ public class Tools {
      * @param size2
      * @return imgGauss
      */ 
-    public ClearCLBuffer DOG(ClearCLBuffer imgCL, double size1, double size2) {
+    private ClearCLBuffer DOG(ClearCLBuffer imgCL, double size1, double size2) {
         ClearCLBuffer imgCLDOG = clij2.create(imgCL);
         clij2.differenceOfGaussian3D(imgCL, imgCLDOG, size1, size1, size1, size2, size2, size2);
         clij2.release(imgCL);
         return(imgCLDOG);
     }
     
-//     /**
-//     * Find volume of objects  
-//     * @param dotsPop
-//     * @return vol
-//     */
-//    
-//    public Double findDotsVolume (Objects3DIntPopulation dotsPop) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-//        IJ.showStatus("Findind object's volume");
-//        Double vol = 0.0;
-//        List<Double[]> measurements = dotsPop.getMeasurements(new MeasureVolume().getClass());
-//        for (Double[] me : measurements) {
-//            vol += me[2];
-//        }
-//        return(vol);
-//    }
+    /**
+     * Get all objects population in one object
+     */
+    private Object3DInt getInOneObject(Objects3DIntPopulation pop) {
+        ImageHandler imh = pop.drawImage();
+        ImageByte imhTh = imh.thresholdAboveExclusive(1);
+        imh.closeImagePlus();
+        Object3DInt obj = new Object3DInt(imhTh);
+        imhTh.closeImagePlus();
+        obj.setResXY(cal.pixelWidth);
+        obj.setResZ(cal.pixelDepth);
+        return(obj);
+    }
     
      /**
      * Find volume of objects  
@@ -338,33 +344,20 @@ public class Tools {
      * @return vol
      */
     
-    public Double findDotsVolume (Objects3DIntPopulation dotsPop) {
+    public double findDotsVolume (Objects3DIntPopulation dotsPop) {
         IJ.showStatus("Findind object's volume");
-        Double vol = 0.0;
-        for (Object3DInt dot : dotsPop.getObjects3DInt()) {
-            MeasureVolume measureVol = new MeasureVolume(dot);
-            vol = vol + measureVol.getVolumeUnit();
-        }
-        return(vol);
+//        double vol = 0.0;
+//        for (Iterator<Object3DInt> it = dotsPop.getObjects3DInt().iterator(); it.hasNext();) {
+//            Object3DInt dot = it.next();
+//            MeasureVolume measureVol = new MeasureVolume(dot);
+//            vol = vol + measureVol.getVolumeUnit();
+//        }
+//        return(vol);
+        Object3DInt dots = getInOneObject(dotsPop);
+        MeasureVolume measureVol = new MeasureVolume(dots);
+        return(measureVol.getVolumeUnit());
     }
     
-//     /**
-//     * Find sum intensity of objects  
-//     * @param dotsPop
-//     * @param img
-//     * @return intensity
-//     */
-//    
-//    public Double findDotsIntensity (Objects3DIntPopulation dotsPop, ImagePlus img) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException{
-//        IJ.showStatus("Findind object's intensity");
-//        Double intensity = 0.0;
-//        ImageHandler imh = ImageHandler.wrap(img);
-//        List<Double[]> measurements = dotsPop.getMeasurementsIntensity(new MeasureIntensity().getClass(), imh);
-//        for (Double[] me : measurements) {
-//            intensity += me[5];
-//        }
-//        return(intensity);
-//    }
     
      /**
      * Find sum intensity of objects  
@@ -373,16 +366,27 @@ public class Tools {
      * @return intensity
      */
     
-    public Double findDotsIntensity (Objects3DIntPopulation dotsPop, ImagePlus img) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException{
+    public double findDotsIntensity (Objects3DIntPopulation dotsPop, ImagePlus img) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         IJ.showStatus("Findind object's intensity");
-        Double intensity = 0.0;
+//        double intensity = 0.0;
+//        int start = 1;
+//        int end = dotsPop.getNbObjects();
+//        ImageHandler imh = ImageHandler.wrap(img);
+//        for (Iterator<Object3DInt> it = dotsPop.getObjects3DInt().iterator(); it.hasNext();) {
+//            Object3DInt dot = it.next();
+//            IJ.showStatus("!Finding intensity of object "+start+"/"+ end);
+//            MeasureIntensity measureInt = new MeasureIntensity(dot, imh);
+//            intensity = intensity + measureInt.getValueMeasurement(MeasureIntensity.INTENSITY_SUM);
+//            start++;
+//        }
+//        return(intensity);
         ImageHandler imh = ImageHandler.wrap(img);
-        for (Object3DInt dot : dotsPop.getObjects3DInt()) {
-            MeasureIntensity measureInt = new MeasureIntensity(dot, imh);
-            intensity = intensity + measureInt.getValueMeasurement(MeasureIntensity.INTENSITY_SUM);
-        }
-        return(intensity);
+        Object3DInt dots = getInOneObject(dotsPop);
+        MeasureIntensity measureInt = new MeasureIntensity(dots, imh);
+        imh.closeImagePlus();
+        return(measureInt.getValueMeasurement(MeasureIntensity.INTENSITY_SUM));
     }
+
     
     /** Look for all nuclei
          Do z slice by slice stardist 
@@ -395,7 +399,7 @@ public class Tools {
             // resize to be in a stardist-friendly scale
             int width = imgNuc.getWidth();
             int height = imgNuc.getHeight();
-            double factor = 0.25;
+            float factor = 0.25f;
             ImagePlus img = imgNuc.resize((int)(width*factor), (int)(height*factor), 1, "bilinear");
             IJ.run(img, "Remove Outliers", "block_radius_x=40 block_radius_y=40 standard_deviations=1 stack");
             // Go StarDist
@@ -475,41 +479,19 @@ public class Tools {
     public Objects3DIntPopulation findDots_in_Cells(Objects3DIntPopulation dotsPop, Objects3DIntPopulation cellPop) {
         Objects3DIntPopulation dotsCellPop = new Objects3DIntPopulation();
         MeasurePopulationColocalisation coloc =  new MeasurePopulationColocalisation(dotsPop, cellPop);
+        int dots = dotsPop.getNbObjects();
         for (Object3DInt dot : dotsPop.getObjects3DInt()) {
-            if(coloc.getValuesObject1(dot.getValue()).length > 0)
+            float dotValue = dot.getValue();
+            IJ.showStatus("!Checking coloc dot "+dotValue+"/"+dots);
+            double[] colocVal = coloc.getValuesObject1(dotValue);
+            if((colocVal.length > 0) && (colocVal[2] > 1)) {
                 dotsCellPop.addObject(dot);
+            }
         }
         dotsCellPop.setResXY(cal.pixelWidth);
         dotsCellPop.setResZ(cal.pixelDepth);
         return(dotsPop);
     } 
-     
-//     /**
-//      * test if object exist in population
-//      */
-//    private boolean existsObj(Object3D obj, Objects3DPopulation pop) {
-//        boolean index = (pop.getIndexOf(obj) >= 0) ? true : false;
-//        return(index);
-//    }
-//    
-//    /**
-//     * find dots inside Nucleus | NeuN
-//     * @param cellPop
-//     * @param dotsPop
-//     * @return 
-//     */
-//    public Objects3DPopulation findDots_in_Cells(Objects3DPopulation dotsPop, Objects3DPopulation cellPop) {
-//        Objects3DPopulation dotsCellPop = new Objects3DPopulation();
-//        Objects3DPopulationColocalisation coloc =  new Objects3DPopulationColocalisation(dotsPop, cellPop);
-//        ArrayList<PairColocalisationOld> pairColoc = coloc.getAllColocalisationPairs();
-//        for (PairColocalisationOld p : pairColoc) {
-//            int volColoc = p.getVolumeColoc();
-//            if (volColoc > 0 && !existsObj(p.getObject3D1(),dotsCellPop))
-//                dotsCellPop.addObject(p.getObject3D1());
-//        }
-//        dotsCellPop.setCalibration(cal.pixelWidth, cal.pixelDepth, cal.getUnit());
-//        return(dotsPop);
-//    }
     
     
     /**
@@ -527,26 +509,32 @@ public class Tools {
     
     /**
      * Save dots Population in image
-     * @param dots1Pop
-     * @param dots2Pop
+     * @param pop1
+     * @param pop2
+     * @param pop3
      * @param imageName
      * @param img 
+     * @param outDir 
      */
     public void saveImgObjects(Objects3DIntPopulation pop1, Objects3DIntPopulation pop2, Objects3DIntPopulation pop3, String imageName, ImagePlus img, String outDir) {
         //create image objects population
-        ImageHandler imgObj1 = ImageInt.wrap(img).createSameDimensions();
-        ImageHandler imgObj2 = ImageInt.wrap(img).createSameDimensions();
+//        ImageHandler imgObj1 = ImageInt.wrap(img).createSameDimensions();
+//        ImageHandler imgObj2 = ImageInt.wrap(img).createSameDimensions();
+//        ImageHandler imgObj3 = null;
+//        if (pop3 != null)
+//            imgObj3 = ImageInt.wrap(img).createSameDimensions();
+//        //population green
+//        pop1.drawInImage(imgObj1);
+//        //population red       
+//        pop2.drawInImage(imgObj2);
+//        //population blue
+//        if (pop3 != null)
+//            pop3.drawInImage(imgObj3);
+        ImageHandler imgObj1 = pop1.drawImage();
+        ImageHandler imgObj2 = pop2.drawImage();
         ImageHandler imgObj3 = null;
         if (pop3 != null)
-            imgObj3 = ImageInt.wrap(img).createSameDimensions();
-        //population green
-        pop1.drawInImage(imgObj1);
-        //population red       
-        pop2.drawInImage(imgObj2);
-        //population blue
-        if (pop3 != null)
-            pop3.drawInImage(imgObj3);
-
+            imgObj3 = pop3.drawImage();
         // save image for objects population
         ImagePlus[] imgColors = {imgObj1.getImagePlus(), imgObj2.getImagePlus(), imgObj3.getImagePlus()};
         ImagePlus imgObjects = new RGBStackMerge().mergeHyperstacks(imgColors, false);
