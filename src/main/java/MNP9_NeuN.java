@@ -27,7 +27,7 @@ import loci.formats.services.OMEXMLService;
 import loci.plugins.BF;
 import loci.plugins.in.ImporterOptions;
 import loci.plugins.util.ImageProcessorReader;
-import mcib3d.geom2.Objects3DIntPopulation;
+import mcib3d.geom.Objects3DPopulation;
 import org.apache.commons.io.FilenameUtils;
 
 
@@ -128,70 +128,70 @@ public class MNP9_NeuN implements PlugIn {
                 System.out.println("--- Opening MNP9 channel  ...");
                 ImagePlus imgMNP9 = BF.openImagePlus(options)[channelsIndex[1]];
                 // Find all MMNP9 dots
-                Objects3DIntPopulation MNP9Pop = tools.findDots(imgMNP9, null, null);
+                Objects3DPopulation MNP9Pop = tools.findDots(imgMNP9, null, null);
                 int MNP9Dots = MNP9Pop.getNbObjects();
                 System.out.println(MNP9Dots+" MNP9 found");
                 // Compute parameters
-                double MNP9Vol = tools.findDotsVolume(MNP9Pop);
-                double MNP9Int = tools.findDotsIntensity(MNP9Pop, imgMNP9);
+                double MNP9Vol = tools.findDotsVolumeIntensity(MNP9Pop,imgMNP9)[0];
+                double MNP9Int = tools.findDotsVolumeIntensity(MNP9Pop, imgMNP9)[1];
                 
                 
                 // Find nucleus in DAPI channel
                 System.out.println("--- Opening nucleus channel ...");
                 ImagePlus imgNucleus = BF.openImagePlus(options)[channelsIndex[0]];
                 // Find nucleus
-                Objects3DIntPopulation nucPop = tools.stardistNucleiPop(imgNucleus);
+                Objects3DPopulation nucPop = tools.stardistNucleiPop(imgNucleus);
                 int nuc = nucPop.getNbObjects();
                 System.out.println(nuc +" nucleus found");
                 tools.flush_close(imgNucleus);
                 
                 // Find MNP9 inside nucleus
-                Objects3DIntPopulation MNP9Pop_DAPI = tools.findDots_in_Cells(MNP9Pop, nucPop);
+                Objects3DPopulation MNP9Pop_DAPI = tools.findDots_in_Cells(MNP9Pop, nucPop);
                 // Compute parameters
                 int MNP9_DapiDots = MNP9Pop_DAPI.getNbObjects();
                 System.out.println(MNP9_DapiDots +" MNP9 in nucleus found");
-                double MNP9_DapiVol = tools.findDotsVolume(MNP9Pop_DAPI);
-                double MNP9_DapiInt = tools.findDotsIntensity(MNP9Pop_DAPI, imgMNP9);
+                double MNP9_DapiVol = tools.findDotsVolumeIntensity(MNP9Pop_DAPI, imgMNP9)[0];
+                double MNP9_DapiInt = tools.findDotsVolumeIntensity(MNP9Pop_DAPI, imgMNP9)[1];
 
                 // Find MNP9 outside nucleus
-                Objects3DIntPopulation MNP9Pop_OutDAPI = tools.findDots_out_Cells(imgMNP9, nucPop, null);
+                Objects3DPopulation MNP9Pop_OutDAPI = tools.findDots_out_Cells(imgMNP9, nucPop, null);
                 // Compute parameters
                 int MNP9_OutDapiDots = MNP9Pop_OutDAPI.getNbObjects();
                 System.out.println(MNP9_OutDapiDots +" MNP9 outside nucleus found");
-                double MNP9_OutDapiVol = tools.findDotsVolume(MNP9Pop_OutDAPI);
-                double MNP9_OutDapiInt = tools.findDotsIntensity(MNP9Pop_OutDAPI, imgMNP9);
+                double MNP9_OutDapiVol = tools.findDotsVolumeIntensity(MNP9Pop_OutDAPI, imgMNP9)[0];
+                double MNP9_OutDapiInt = tools.findDotsVolumeIntensity(MNP9Pop_OutDAPI, imgMNP9)[1];
 
                 // open NeuN Channel
                 System.out.println("--- Opening NeuN channel  ...");
                 ImagePlus imgNeuN = BF.openImagePlus(options)[channelsIndex[2]];
-                Objects3DIntPopulation neuNPop = tools.stardistNucleiPop(imgNeuN);
+                Objects3DPopulation neuNPop = tools.stardistNucleiPop(imgNeuN);
                 int NeuN = neuNPop.getNbObjects();
                 System.out.println(NeuN +" neuN found");
                 tools.flush_close(imgNeuN);
                 
                 // Find MNP9 in NeuN
-                Objects3DIntPopulation MNP9Pop_NeuN = tools.findDots_in_Cells(MNP9Pop, neuNPop);
+                Objects3DPopulation MNP9Pop_NeuN = tools.findDots_in_Cells(MNP9Pop, neuNPop);
                 // Compute parameters
                 int MNP9_NeuNDots = MNP9Pop_NeuN.getNbObjects();
                 System.out.println(MNP9_NeuNDots +" MNP9 in NeuN cells found");
-                double MNP9_NeuNVol = tools.findDotsVolume(MNP9Pop_NeuN);
-                double MNP9_NeuNInt = tools.findDotsIntensity(MNP9Pop_NeuN, imgMNP9);
+                double MNP9_NeuNVol = tools.findDotsVolumeIntensity(MNP9Pop_NeuN, imgMNP9)[0];
+                double MNP9_NeuNInt = tools.findDotsVolumeIntensity(MNP9Pop_NeuN, imgMNP9)[1];
                 
                 // Find MNP9 outside NeuN
-                Objects3DIntPopulation MNP9Pop_OutNeuN = tools.findDots_out_Cells(imgMNP9, neuNPop, null);
+                Objects3DPopulation MNP9Pop_OutNeuN = tools.findDots_out_Cells(imgMNP9, neuNPop, null);
                 // Compute parameters
                 int MNP9_OutNeuNDots = MNP9Pop_OutNeuN.getNbObjects();
                 System.out.println(MNP9_OutNeuNDots +" MNP9 outside NeuN cells found");
-                double MNP9_OutNeuNVol = tools.findDotsVolume(MNP9Pop_OutNeuN);
-                double MNP9_OutNeuNInt = tools.findDotsIntensity(MNP9Pop_OutNeuN, imgMNP9);
+                double MNP9_OutNeuNVol = tools.findDotsVolumeIntensity(MNP9Pop_OutNeuN, imgMNP9)[0];
+                double MNP9_OutNeuNInt = tools.findDotsVolumeIntensity(MNP9Pop_OutNeuN, imgMNP9)[1];
                 
                 // Find MNP9 outside cells
-                Objects3DIntPopulation MNP9Pop_OutCells = tools.findDots_out_Cells(imgMNP9, neuNPop, nucPop);
+                Objects3DPopulation MNP9Pop_OutCells = tools.findDots_out_Cells(imgMNP9, neuNPop, nucPop);
                 // Compute parameters
                 int MNP9_OutCellsDots = MNP9Pop_OutCells.getNbObjects();
                 System.out.println(MNP9_OutCellsDots +" MNP9 outside cells found");
-                double MNP9_OutCellsVol = tools.findDotsVolume(MNP9Pop_OutCells);
-                double MNP9_OutCellsInt = tools.findDotsIntensity(MNP9Pop_OutCells, imgMNP9);
+                double MNP9_OutCellsVol = tools.findDotsVolumeIntensity(MNP9Pop_OutCells, imgMNP9)[0];
+                double MNP9_OutCellsInt = tools.findDotsVolumeIntensity(MNP9Pop_OutCells, imgMNP9)[1];
                 
                 // Save image objects
                 tools.saveImgObjects(nucPop, neuNPop, MNP9Pop, rootName+"_Objects.tif", imgMNP9, outDirResults);
@@ -204,7 +204,7 @@ public class MNP9_NeuN implements PlugIn {
                 nucleus_Analyze.flush();
             }
         } 
-        catch (DependencyException | ServiceException | FormatException | IOException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException ex) {
+        catch (DependencyException | ServiceException | FormatException | IOException  ex) {
             Logger.getLogger(MNP9_NeuN.class.getName()).log(Level.SEVERE, null, ex);
         }
         IJ.showStatus("Process done");
