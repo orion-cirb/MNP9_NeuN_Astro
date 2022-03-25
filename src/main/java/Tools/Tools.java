@@ -5,6 +5,7 @@ import StardistOrion.StarDist2D;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.WaitForUserDialog;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.plugin.RGBStackMerge;
@@ -318,7 +319,7 @@ public class Tools {
      * Get all objects population in one object
      */
     private Object3D getInOneObject(Objects3DPopulation pop, ImagePlus img) {
-        ImageHandler imh = ImageHandler.wrap(img);
+        ImageHandler imh = ImageHandler.wrap(img).createSameDimensions();
         pop.draw(imh, 255);
         Object3D obj = new Objects3DPopulation(imh).getObject(0);
         imh.closeImagePlus();
@@ -340,6 +341,7 @@ public class Tools {
         Object3D dot = getInOneObject(dotsPop, img);
         volInt[0] = dot.getVolumeUnit();
         volInt[1] = dot.getIntegratedDensity(imh);
+        imh.closeImagePlus();
         return(volInt);
     }
     
@@ -429,15 +431,15 @@ public class Tools {
      * @param dotsPop
      * @return 
      */
-    public Objects3DPopulation findDots_in_Cells(Objects3DPopulation dotsPop, Objects3DPopulation cellPop) {
+    public Objects3DPopulation findDots_in_Cells(Objects3DPopulation dotsPop, Objects3DPopulation cellPop, ImagePlus img) {
         Objects3DPopulation dotInCellPop = new Objects3DPopulation();
-        for (int n = 0; n < dotsPop.getNbObjects(); n++) {
+        Object3D cell = getInOneObject(cellPop, img);
+        int dots = dotsPop.getNbObjects();
+        for (int n = 0; n < dots; n++) {
+            IJ.showStatus("!Finding dots "+n+"/"+dots+" inside cell");
             Object3D dot = dotsPop.getObject(n);
-            for (int j = 0; j < cellPop.getNbObjects(); j++) {
-                Object3D cell = cellPop.getObject(j);
-                if (dot.hasOneVoxelColoc(cell))
+            if (dot.hasOneVoxelColoc(cell))
                 dotInCellPop.addObject(dot);
-            }
         }
         return(dotInCellPop);
     } 

@@ -131,8 +131,7 @@ public class MNP9_Astro implements PlugIn {
                 // Compute parameters
                 int MNP9Dots = MNP9Pop.getNbObjects();
                 System.out.println(MNP9Dots +" MNP9 found");
-                double MNP9Vol = tools.findDotsVolumeIntensity(MNP9Pop,imgMNP9)[0];
-                double MNP9Int = tools.findDotsVolumeIntensity(MNP9Pop, imgMNP9)[1];
+                double[] MNP9VolInt = tools.findDotsVolumeIntensity(MNP9Pop, imgMNP9);
                 
                 // Find nucleus in DAPI channel
                 System.out.println("--- Opening nucleus channel  ...");
@@ -144,20 +143,18 @@ public class MNP9_Astro implements PlugIn {
                 tools.flush_close(imgNucleus);
                 
                 // Find MNP9 inside nucleus
-                Objects3DPopulation MNP9Pop_DAPI = tools.findDots_in_Cells(MNP9Pop, nucPop);
+                Objects3DPopulation MNP9Pop_DAPI = tools.findDots_in_Cells(MNP9Pop, nucPop,imgMNP9);
                 // Compute parameters
                 int MNP9_NucDots = MNP9Pop_DAPI.getNbObjects();
                 System.out.println(MNP9_NucDots +" MNP9 in nucleus found");
-                double MNP9_NucVol = tools.findDotsVolumeIntensity(MNP9Pop_DAPI, imgMNP9)[0];
-                double MNP9_NucInt = tools.findDotsVolumeIntensity(MNP9Pop_DAPI, imgMNP9)[1];
+                double[] MNP9_NucVolInt = tools.findDotsVolumeIntensity(MNP9Pop_DAPI, imgMNP9);
 
                 // Find MNP9 outside nucleus
                 Objects3DPopulation MNP9Pop_OutDAPI = tools.findDots_out_Cells(imgMNP9, nucPop, null);
                 // Compute parameters
                 int MNP9_OutNucDots = MNP9Pop_OutDAPI.getNbObjects();
                 System.out.println(MNP9_OutNucDots +" MNP9 outside nucleus found");
-                double MNP9_OutNucVol = tools.findDotsVolumeIntensity(MNP9Pop_OutDAPI, imgMNP9)[0];
-                double MNP9_OutNucInt = tools.findDotsVolumeIntensity(MNP9Pop_OutDAPI, imgMNP9)[1];
+                double[] MNP9_OutNucVolInt = tools.findDotsVolumeIntensity(MNP9Pop_OutDAPI, imgMNP9);
                 
                 // open Astro Channel
                 System.out.println("--- Opening astrocyte channel  ...");
@@ -167,37 +164,35 @@ public class MNP9_Astro implements PlugIn {
                 tools.flush_close(imgAstro);
                 
                 // Find MNP9 in astrocyte
-                Objects3DPopulation MNP9Pop_Astro = tools.findDots_in_Cells(MNP9Pop, astroPop);
+                Objects3DPopulation MNP9Pop_Astro = tools.findDots_in_Cells(MNP9Pop, astroPop,imgMNP9);
                 // Compute parameters
                 int MNP9_AstroDots = MNP9Pop_Astro.getNbObjects();
                 System.out.println(MNP9_AstroDots +" MNP9 in astrocyte found");
-                double MNP9_AstroVol = tools.findDotsVolumeIntensity(MNP9Pop_Astro, imgMNP9)[0];
-                double MNP9_AstroInt = tools.findDotsVolumeIntensity(MNP9Pop_Astro, imgMNP9)[1];
+                double[] MNP9_AstroVolInt = tools.findDotsVolumeIntensity(MNP9Pop_Astro, imgMNP9);
                 
                 // Find MNP9 outside astrocyte
                 Objects3DPopulation MNP9Pop_OutAstro = tools.findDots_out_Cells(imgMNP9, astroPop, null);
                 // Compute parameters
                 int MNP9_OutAstroDots = MNP9Pop_OutAstro.getNbObjects();
                 System.out.println(MNP9_OutAstroDots +" MNP9 outside astrocyte found");
-                double MNP9_OutAstroVol = tools.findDotsVolumeIntensity(MNP9Pop_OutAstro, imgMNP9)[0];
-                double MNP9_OutAstroInt = tools.findDotsVolumeIntensity(MNP9Pop_OutAstro, imgMNP9)[1];
+                double[] MNP9_OutAstroVolInt = tools.findDotsVolumeIntensity(MNP9Pop_OutAstro, imgMNP9);
                 
                 // Find MNP9 outside cells
                 Objects3DPopulation MNP9Pop_OutCells = tools.findDots_out_Cells(imgMNP9, nucPop, astroPop);
                 // Compute parameters
                 int MNP9_OutCellsDots = MNP9Pop_OutCells.getNbObjects();
                 System.out.println(MNP9_OutCellsDots +" MNP9 outside cells found");
-                double MNP9_OutCellsVol = tools.findDotsVolumeIntensity(MNP9Pop_OutCells, imgMNP9)[0];
-                double MNP9_OutCellsInt = tools.findDotsVolumeIntensity(MNP9Pop_OutCells, imgMNP9)[1];
+                double[] MNP9_OutCellsVolInt = tools.findDotsVolumeIntensity(MNP9Pop_OutCells, imgMNP9);
                 
                 // Save image objects
                 tools.saveImgObjects(nucPop, astroPop, MNP9Pop, rootName+"_Objects.tif", imgMNP9, outDirResults);
                 tools.flush_close(imgMNP9);
                 
                 // write data
-                nucleus_Analyze.write(rootName+"\t"+secVol+"\t"+nuc+"\t"+MNP9Dots+"\t"+MNP9Vol+"\t"+MNP9Int+"\t"+MNP9_NucDots+"\t"+MNP9_NucVol+"\t"+MNP9_NucInt+"\t"+
-                        astroVol+"\t"+MNP9_AstroDots+"\t"+MNP9_AstroVol+"\t"+MNP9_AstroInt+"\t"+MNP9_OutNucDots+"\t"+MNP9_OutNucVol+"\t"+MNP9_OutNucInt+"\t"+
-                        MNP9_OutAstroDots+"\t"+MNP9_OutAstroVol+"\t"+MNP9_OutAstroInt+MNP9_OutCellsDots+"\t"+MNP9_OutCellsVol+"\t"+MNP9_OutCellsInt+"\n");
+                nucleus_Analyze.write(rootName+"\t"+secVol+"\t"+nuc+"\t"+MNP9Dots+"\t"+MNP9VolInt[0]+"\t"+MNP9VolInt[1]+"\t"+MNP9_NucDots+"\t"+MNP9_NucVolInt[0]+"\t"
+                        +MNP9_NucVolInt[1]+"\t"+astroVol+"\t"+MNP9_AstroDots+"\t"+MNP9_AstroVolInt[0]+"\t"+MNP9_AstroVolInt[1]+"\t"+MNP9_OutNucDots+"\t"+
+                        MNP9_OutNucVolInt[0]+"\t"+MNP9_OutNucVolInt[1]+"\t"+MNP9_OutAstroDots+"\t"+MNP9_OutAstroVolInt[0]+"\t"+MNP9_OutAstroVolInt[1]+
+                        MNP9_OutCellsDots+"\t"+MNP9_OutCellsVolInt[0]+"\t"+MNP9_OutCellsVolInt[1]+"\n");
                 nucleus_Analyze.flush();
             }
         } 
