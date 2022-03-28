@@ -5,7 +5,7 @@
  * Author Philippe Mailly
  */
 
-import Tools.Tools;
+import MNP9_Tools.Tools;
 import ij.*;
 import ij.plugin.PlugIn;
 import java.io.BufferedWriter;
@@ -90,7 +90,7 @@ public class MNP9_NeuN implements PlugIn {
             // Write header
             String header= "Image Name\tSection volume (µm3)\t#Nucleus\t#MNP9\tVol MNP9\tIntensity MNP9\t#MNP9 in nucleus\tVol MNP9 in Nucleus\tintensity MNP9 in Nucleus\t"
                     + "#MNP9 in NeuN\tVol MNP9 in NeuN\tIntensity MNP9 in NeuN\t#MNP9 outside nucleus\tVol MNP9 outside nucleus\tintensity MNP9 outside nucleus\t"
-                    + "#MNP9 outside NeuN\tVol MNP9 outside NeN\tintensity MNP9 outside NeuN\t#MNP9 outside cells\tVol MNP9 outside cells\tintensity MNP9 outside cells\n";
+                    + "#MNP9 outside NeuN\tVol MNP9 outside NeuN\tintensity MNP9 outside NeuN\t#MNP9 outside cells\tVol MNP9 outside cells\tintensity MNP9 outside cells\n";
             FileWriter fwNucleusGlobal = new FileWriter(outDirResults + "MNP9_Results.xls", false);
             nucleus_Analyze = new BufferedWriter(fwNucleusGlobal);
             nucleus_Analyze.write(header);
