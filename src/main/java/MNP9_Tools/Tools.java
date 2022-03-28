@@ -504,18 +504,6 @@ public class Tools {
      */
     public void saveImgObjects(Objects3DIntPopulation pop1, Objects3DIntPopulation pop2, Objects3DIntPopulation pop3, String imageName, ImagePlus img, String outDir) {
         //create image objects population
-//        ImageHandler imgObj1 = ImageInt.wrap(img).createSameDimensions();
-//        ImageHandler imgObj2 = ImageInt.wrap(img).createSameDimensions();
-//        ImageHandler imgObj3 = null;
-//        if (pop3 != null)
-//            imgObj3 = ImageInt.wrap(img).createSameDimensions();
-//        //population green
-//        pop1.drawInImage(imgObj1);
-//        //population red       
-//        pop2.drawInImage(imgObj2);
-//        //population blue
-//        if (pop3 != null)
-//            pop3.drawInImage(imgObj3);
         ImageHandler imgObj1 = pop1.drawImage();
         ImageHandler imgObj2 = pop2.drawImage();
         ImageHandler imgObj3 = null;

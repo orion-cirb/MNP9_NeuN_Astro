@@ -13,7 +13,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -28,7 +27,7 @@ import loci.formats.services.OMEXMLService;
 import loci.plugins.BF;
 import loci.plugins.in.ImporterOptions;
 import loci.plugins.util.ImageProcessorReader;
-import mcib3d.geom2.Objects3DIntPopulation;
+import mcib3d.geom.Objects3DPopulation;
 import org.apache.commons.io.FilenameUtils;
 
 
@@ -128,84 +127,77 @@ public class MNP9_Astro implements PlugIn {
                 ImagePlus imgMNP9 = BF.openImagePlus(options)[channelsIndex[2]];
                 
                 // Find all MMNP9 dots
-                Objects3DIntPopulation MNP9Pop = tools.findDots(imgMNP9, null, null);
+                Objects3DPopulation MNP9Pop = tools.findDots(imgMNP9, null, null);
                 // Compute parameters
                 int MNP9Dots = MNP9Pop.getNbObjects();
                 System.out.println(MNP9Dots +" MNP9 found");
-                double MNP9Vol = tools.findDotsVolume(MNP9Pop);
-                double MNP9Int = tools.findDotsIntensity(MNP9Pop, imgMNP9);
+                double[] MNP9VolInt = tools.findDotsVolumeIntensity(MNP9Pop, imgMNP9);
                 
                 // Find nucleus in DAPI channel
                 System.out.println("--- Opening nucleus channel  ...");
                 ImagePlus imgNucleus = BF.openImagePlus(options)[channelsIndex[0]];
                 // Find nucleus
-                Objects3DIntPopulation nucPop = tools.stardistNucleiPop(imgNucleus);
+                Objects3DPopulation nucPop = tools.stardistNucleiPop(imgNucleus);
                 int nuc = nucPop.getNbObjects();
                 System.out.println(nuc +" nucleus found");
                 tools.flush_close(imgNucleus);
                 
                 // Find MNP9 inside nucleus
-                Objects3DIntPopulation MNP9Pop_DAPI = tools.findDots_in_Cells(MNP9Pop, nucPop);
+                Objects3DPopulation MNP9Pop_DAPI = tools.findDots_in_Cells(MNP9Pop, nucPop,imgMNP9);
                 // Compute parameters
                 int MNP9_NucDots = MNP9Pop_DAPI.getNbObjects();
                 System.out.println(MNP9_NucDots +" MNP9 in nucleus found");
-                double MNP9_NucVol = tools.findDotsVolume(MNP9Pop_DAPI);
-                double MNP9_NucInt = tools.findDotsIntensity(MNP9Pop_DAPI, imgMNP9);
+                double[] MNP9_NucVolInt = tools.findDotsVolumeIntensity(MNP9Pop_DAPI, imgMNP9);
 
                 // Find MNP9 outside nucleus
-                Objects3DIntPopulation MNP9Pop_OutDAPI = tools.findDots_out_Cells(imgMNP9, nucPop, null);
+                Objects3DPopulation MNP9Pop_OutDAPI = tools.findDots_out_Cells(imgMNP9, nucPop, null);
                 // Compute parameters
                 int MNP9_OutNucDots = MNP9Pop_OutDAPI.getNbObjects();
                 System.out.println(MNP9_OutNucDots +" MNP9 outside nucleus found");
-                double MNP9_OutNucVol = tools.findDotsVolume(MNP9Pop_OutDAPI);
-                double MNP9_OutNucInt = tools.findDotsIntensity(MNP9Pop_OutDAPI, imgMNP9);
+                double[] MNP9_OutNucVolInt = tools.findDotsVolumeIntensity(MNP9Pop_OutDAPI, imgMNP9);
                 
                 // open Astro Channel
                 System.out.println("--- Opening astrocyte channel  ...");
                 ImagePlus imgAstro = BF.openImagePlus(options)[channelsIndex[1]];
-                Objects3DIntPopulation astroPop = tools.findAstrocytePop(imgAstro);
-                double astroVol = tools.findDotsVolume(astroPop);
+                Objects3DPopulation astroPop = tools.findAstrocytePop(imgAstro);
+                double astroVol = tools.findDotsVolumeIntensity(astroPop, imgMNP9)[0];
                 tools.flush_close(imgAstro);
                 
                 // Find MNP9 in astrocyte
-                Objects3DIntPopulation MNP9Pop_Astro = tools.findDots_in_Cells(MNP9Pop, astroPop);
+                Objects3DPopulation MNP9Pop_Astro = tools.findDots_in_Cells(MNP9Pop, astroPop,imgMNP9);
                 // Compute parameters
                 int MNP9_AstroDots = MNP9Pop_Astro.getNbObjects();
                 System.out.println(MNP9_AstroDots +" MNP9 in astrocyte found");
-                double MNP9_AstroVol = tools.findDotsVolume(MNP9Pop_Astro);
-                double MNP9_AstroInt = tools.findDotsIntensity(MNP9Pop_Astro, imgMNP9);
+                double[] MNP9_AstroVolInt = tools.findDotsVolumeIntensity(MNP9Pop_Astro, imgMNP9);
                 
                 // Find MNP9 outside astrocyte
-                Objects3DIntPopulation MNP9Pop_OutAstro = tools.findDots_out_Cells(imgMNP9, astroPop, null);
+                Objects3DPopulation MNP9Pop_OutAstro = tools.findDots_out_Cells(imgMNP9, astroPop, null);
                 // Compute parameters
                 int MNP9_OutAstroDots = MNP9Pop_OutAstro.getNbObjects();
                 System.out.println(MNP9_OutAstroDots +" MNP9 outside astrocyte found");
-                double MNP9_OutAstroVol = tools.findDotsVolume(MNP9Pop_OutAstro);
-                double MNP9_OutAstroInt = tools.findDotsIntensity(MNP9Pop_OutAstro, imgMNP9);
+                double[] MNP9_OutAstroVolInt = tools.findDotsVolumeIntensity(MNP9Pop_OutAstro, imgMNP9);
                 
                 // Find MNP9 outside cells
-                Objects3DIntPopulation MNP9Pop_OutCells = tools.findDots_out_Cells(imgMNP9, nucPop, astroPop);
+                Objects3DPopulation MNP9Pop_OutCells = tools.findDots_out_Cells(imgMNP9, nucPop, astroPop);
                 // Compute parameters
                 int MNP9_OutCellsDots = MNP9Pop_OutCells.getNbObjects();
                 System.out.println(MNP9_OutCellsDots +" MNP9 outside cells found");
-                double MNP9_OutCellsVol = tools.findDotsVolume(MNP9Pop_OutCells);
-                double MNP9_OutCellsInt = tools.findDotsIntensity(MNP9Pop_OutCells, imgMNP9);
+                double[] MNP9_OutCellsVolInt = tools.findDotsVolumeIntensity(MNP9Pop_OutCells, imgMNP9);
                 
                 // Save image objects
                 tools.saveImgObjects(nucPop, astroPop, MNP9Pop, rootName+"_Objects.tif", imgMNP9, outDirResults);
                 tools.flush_close(imgMNP9);
                 
                 // write data
-                nucleus_Analyze.write(rootName+"\t"+secVol+"\t"+nuc+"\t"+MNP9Dots+"\t"+MNP9Vol+"\t"+MNP9Int+"\t"+MNP9_NucDots+"\t"+MNP9_NucVol+"\t"+MNP9_NucInt+"\t"+
-                        astroVol+"\t"+MNP9_AstroDots+"\t"+MNP9_AstroVol+"\t"+MNP9_AstroInt+"\t"+MNP9_OutNucDots+"\t"+MNP9_OutNucVol+"\t"+MNP9_OutNucInt+"\t"+
-                        MNP9_OutAstroDots+"\t"+MNP9_OutAstroVol+"\t"+MNP9_OutAstroInt+MNP9_OutCellsDots+"\t"+MNP9_OutCellsVol+"\t"+MNP9_OutCellsInt+"\n");
+                nucleus_Analyze.write(rootName+"\t"+secVol+"\t"+nuc+"\t"+MNP9Dots+"\t"+MNP9VolInt[0]+"\t"+MNP9VolInt[1]+"\t"+MNP9_NucDots+"\t"+MNP9_NucVolInt[0]+"\t"
+                        +MNP9_NucVolInt[1]+"\t"+astroVol+"\t"+MNP9_AstroDots+"\t"+MNP9_AstroVolInt[0]+"\t"+MNP9_AstroVolInt[1]+"\t"+MNP9_OutNucDots+"\t"+
+                        MNP9_OutNucVolInt[0]+"\t"+MNP9_OutNucVolInt[1]+"\t"+MNP9_OutAstroDots+"\t"+MNP9_OutAstroVolInt[0]+"\t"+MNP9_OutAstroVolInt[1]+
+                        MNP9_OutCellsDots+"\t"+MNP9_OutCellsVolInt[0]+"\t"+MNP9_OutCellsVolInt[1]+"\n");
                 nucleus_Analyze.flush();
             }
         } 
         catch (DependencyException | ServiceException | FormatException | IOException ex) {
             Logger.getLogger(MNP9_NeuN.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException ex) {
-            Logger.getLogger(MNP9_Astro.class.getName()).log(Level.SEVERE, null, ex);
         }
         IJ.showStatus("Process done");
     }
