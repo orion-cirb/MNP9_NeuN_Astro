@@ -1,28 +1,26 @@
-package Tools;
+package MNP9_Tools;
 
 
 import StardistOrion.StarDist2D;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.WaitForUserDialog;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
-import ij.measure.ResultsTable;
 import ij.plugin.RGBStackMerge;
 import ij.process.AutoThresholder;
-import ij.util.ThreadUtil;
-import ij3d.behaviors.WaitForNextFrameBehavior;
 import java.awt.Color;
 import java.awt.Font;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
 import javax.swing.ImageIcon;
 import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
@@ -31,13 +29,11 @@ import loci.formats.meta.IMetadata;
 import loci.plugins.util.ImageProcessorReader;
 import mcib3d.geom2.Object3DInt;
 import mcib3d.geom2.Objects3DIntPopulation;
-import mcib3d.geom2.measurements.Measure2Colocalisation;
 import mcib3d.geom2.measurements.MeasureIntensity;
 import mcib3d.geom2.measurements.MeasureVolume;
 import mcib3d.geom2.measurementsPopulation.MeasurePopulationColocalisation;
 import mcib3d.image3d.ImageByte;
 import mcib3d.image3d.ImageHandler;
-import mcib3d.image3d.ImageInt;
 import net.haesleinhuepf.clij.clearcl.ClearCLBuffer;
 import net.haesleinhuepf.clij2.CLIJ2;
 import org.apache.commons.io.FilenameUtils;
@@ -346,16 +342,15 @@ public class Tools {
     
     public double findDotsVolume (Objects3DIntPopulation dotsPop) {
         IJ.showStatus("Findind object's volume");
-//        double vol = 0.0;
-//        for (Iterator<Object3DInt> it = dotsPop.getObjects3DInt().iterator(); it.hasNext();) {
-//            Object3DInt dot = it.next();
-//            MeasureVolume measureVol = new MeasureVolume(dot);
-//            vol = vol + measureVol.getVolumeUnit();
-//        }
-//        return(vol);
-        Object3DInt dots = getInOneObject(dotsPop);
-        MeasureVolume measureVol = new MeasureVolume(dots);
-        return(measureVol.getVolumeUnit());
+        List<Double[]> results = null;
+        try {
+            results = dotsPop.getMeasurements(MeasureVolume.class);
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        double sum = results.stream().map(arr -> arr[1]).reduce(0.0, Double::sum);
+        System.out.println("NB "+dotsPop.getNbObjects()+" sum of volume "+sum);
+        return(sum);
     }
     
     
@@ -368,23 +363,16 @@ public class Tools {
     
     public double findDotsIntensity (Objects3DIntPopulation dotsPop, ImagePlus img) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         IJ.showStatus("Findind object's intensity");
-//        double intensity = 0.0;
-//        int start = 1;
-//        int end = dotsPop.getNbObjects();
-//        ImageHandler imh = ImageHandler.wrap(img);
-//        for (Iterator<Object3DInt> it = dotsPop.getObjects3DInt().iterator(); it.hasNext();) {
-//            Object3DInt dot = it.next();
-//            IJ.showStatus("!Finding intensity of object "+start+"/"+ end);
-//            MeasureIntensity measureInt = new MeasureIntensity(dot, imh);
-//            intensity = intensity + measureInt.getValueMeasurement(MeasureIntensity.INTENSITY_SUM);
-//            start++;
-//        }
-//        return(intensity);
+        List<Double[]> results = null;
         ImageHandler imh = ImageHandler.wrap(img);
-        Object3DInt dots = getInOneObject(dotsPop);
-        MeasureIntensity measureInt = new MeasureIntensity(dots, imh);
-        imh.closeImagePlus();
-        return(measureInt.getValueMeasurement(MeasureIntensity.INTENSITY_SUM));
+        try {
+            results = dotsPop.getMeasurementsIntensity(MeasureIntensity.class, imh);
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        double sum = results.stream().map(arr -> arr[1]).reduce(0.0, Double::sum);
+        System.out.println("NB "+dotsPop.getNbObjects()+" sum of intensity "+sum);
+        return(sum);
     }
 
     
@@ -472,25 +460,23 @@ public class Tools {
     
     /**
      * find dots inside Nucleus | NeuN
-     * @param cellPop
+     * @param cellsPop
      * @param dotsPop
      * @return 
      */
-    public Objects3DIntPopulation findDots_in_Cells(Objects3DIntPopulation dotsPop, Objects3DIntPopulation cellPop) {
+    public Objects3DIntPopulation findDots_in_Cells(Objects3DIntPopulation dotsPop, Objects3DIntPopulation cellsPop) {
+        IJ.showStatus("Finding coloc ....");
         Objects3DIntPopulation dotsCellPop = new Objects3DIntPopulation();
-        MeasurePopulationColocalisation coloc =  new MeasurePopulationColocalisation(dotsPop, cellPop);
-        int dots = dotsPop.getNbObjects();
+        MeasurePopulationColocalisation coloc = new MeasurePopulationColocalisation(dotsPop, cellsPop);
         for (Object3DInt dot : dotsPop.getObjects3DInt()) {
-            float dotValue = dot.getValue();
-            IJ.showStatus("!Checking coloc dot "+dotValue+"/"+dots);
-            double[] colocVal = coloc.getValuesObject1(dotValue);
-            if((colocVal.length > 0) && (colocVal[2] > 1)) {
+            double[] colocVal = coloc.getValuesObject1(dot.getValue());
+            if(colocVal.length > 0) {
                 dotsCellPop.addObject(dot);
             }
         }
         dotsCellPop.setResXY(cal.pixelWidth);
         dotsCellPop.setResZ(cal.pixelDepth);
-        return(dotsPop);
+        return(dotsCellPop);
     } 
     
     
