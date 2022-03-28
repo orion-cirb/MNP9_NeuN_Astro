@@ -506,19 +506,20 @@ public class Tools {
         //create image objects population
         ImageHandler imgObj1 = pop1.drawImage();
         ImageHandler imgObj2 = pop2.drawImage();
-        ImageHandler imgObj3 = null;
-        if (pop3 != null)
-            imgObj3 = pop3.drawImage();
+        ImageHandler imgObj3 = ImageHandler.wrap(img).createSameDimensions();
+        if (pop3 != null) {
+            pop3.getObjects3DInt().forEach(object3DInt -> object3DInt.drawObject(imgObj3, 255));
+        }
+            
         // save image for objects population
         ImagePlus[] imgColors = {imgObj1.getImagePlus(), imgObj2.getImagePlus(), imgObj3.getImagePlus()};
         ImagePlus imgObjects = new RGBStackMerge().mergeHyperstacks(imgColors, false);
         imgObjects.setCalibration(img.getCalibration());
         FileSaver ImgObjectsFile = new FileSaver(imgObjects);
         ImgObjectsFile.saveAsTiff(outDir + imageName + "_Objects.tif"); 
-        flush_close(imgObj1.getImagePlus());
-        flush_close(imgObj2.getImagePlus());
-        if (pop3 != null)
-            flush_close(imgObj3.getImagePlus());
+        imgObj1.closeImagePlus();
+        imgObj2.closeImagePlus();
+        imgObj3.closeImagePlus();
         flush_close(imgObjects);
     }
     
