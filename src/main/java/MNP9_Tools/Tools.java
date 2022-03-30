@@ -388,7 +388,7 @@ public class Tools {
             int width = imgNuc.getWidth();
             int height = imgNuc.getHeight();
             float factor = 0.25f;
-            ImagePlus img = imgNuc.resize((int)(width*factor), (int)(height*factor), 1, "bilinear");
+            ImagePlus img = imgNuc.resize((int)(width*factor), (int)(height*factor), 1, "none");
             IJ.run(img, "Remove Outliers", "block_radius_x=40 block_radius_y=40 standard_deviations=1 stack");
             // Go StarDist
             File starDistModelFile = new File(stardistModel);
@@ -397,7 +397,7 @@ public class Tools {
             star.setParams(stardistPercentileBottom, stardistPercentileTop, stardistProbThreshNuc, stardistOverlayThreshNuc, stardistOutput);
             star.run();
             // label in 3D
-            ImagePlus nuclei = star.associateLabels().resize(width, height, 1, "bilinear");
+            ImagePlus nuclei = star.associateLabels().resize(width, height, 1, "none");
             flush_close(img);
             ClearCLBuffer labels = clij2.push(nuclei);
             flush_close(nuclei);
