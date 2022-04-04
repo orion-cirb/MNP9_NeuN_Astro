@@ -15,11 +15,8 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import javax.swing.ImageIcon;
 import loci.common.services.DependencyException;
@@ -457,7 +454,38 @@ public class Tools {
         flush_close(imgBin);
         return(dotsPop);
      }
-    
+     /**
+     * Find dots population
+     * @param imgDot
+     * @param nucPop
+     * @param cellPop
+     * @return 
+     */
+     public Objects3DIntPopulation findRohADots(ImagePlus imgDot, Objects3DIntPopulation nucPop, Objects3DIntPopulation cellPop) {
+        IJ.showStatus("Finding RohA");
+        ClearCLBuffer imgCL = clij2.push(imgDot);
+        ClearCLBuffer imgDOG = DOG(imgCL, 1, 2);
+        clij2.release(imgCL);
+        ClearCLBuffer imgMed = median_filter(imgDOG, 4, 4);
+        clij2.release(imgDOG);
+        ClearCLBuffer imgCLBin = threshold(imgMed, "Moments");
+        clij2.release(imgMed);
+        ImagePlus imgBin = clij2.pull(imgCLBin);
+        clij2.release(imgCLBin);
+        imgBin.setCalibration(cal);
+        if (nucPop != null)
+            nucPop.getObjects3DInt().forEach(object3DInt -> object3DInt.drawObject(ImageHandler.wrap(imgBin), 0));
+        if (cellPop != null)
+            cellPop.getObjects3DInt().forEach(object3DInt -> object3DInt.drawObject(ImageHandler.wrap(imgBin), 0));
+        ClearCLBuffer maskCL = clij2.push(imgBin);
+        Objects3DIntPopulation dotsPop = getPopFromClearBuffer(maskCL);
+        clij2.release(maskCL);
+        dotsPop.setResXY(cal.pixelWidth);
+        dotsPop.setResZ(cal.pixelDepth);
+        flush_close(imgBin);
+        return(dotsPop);
+     }
+     
     /**
      * find dots inside Nucleus | NeuN
      * @param cellsPop
