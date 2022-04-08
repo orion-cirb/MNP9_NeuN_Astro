@@ -102,6 +102,7 @@ public class Tools {
         ImagePlus img = clij2.pull(labelsSizeFilter);
         clij2.release(labelsSizeFilter);
         ImageHandler imh = ImageHandler.wrap(img);
+        imh.setScale(cal.pixelWidth, cal.pixelDepth, cal.getUnit());
         flush_close(img);
         Objects3DIntPopulation pop = new Objects3DIntPopulation(imh);
         imh.closeImagePlus();
@@ -339,14 +340,9 @@ public class Tools {
     
     public double findDotsVolume (Objects3DIntPopulation dotsPop) {
         IJ.showStatus("Findind object's volume");
-        List<Double[]> results = null;
-        try {
-            results = dotsPop.getMeasurements(MeasureVolume.class);
-        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
-        }
+        List<Double[]> results = dotsPop.getMeasurementsList(new MeasureVolume().getNamesMeasurement());
         double sum = results.stream().map(arr -> arr[1]).reduce(0.0, Double::sum);
-        System.out.println("NB "+dotsPop.getNbObjects()+" sum of volume "+sum);
+        System.out.println("Sum of volume "+sum);
         return(sum);
     }
     
@@ -360,15 +356,10 @@ public class Tools {
     
     public double findDotsIntensity (Objects3DIntPopulation dotsPop, ImagePlus img) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         IJ.showStatus("Findind object's intensity");
-        List<Double[]> results = null;
         ImageHandler imh = ImageHandler.wrap(img);
-        try {
-            results = dotsPop.getMeasurementsIntensity(MeasureIntensity.class, imh);
-        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
-        }
+        List<Double[]> results = dotsPop.getMeasurementsIntensityList(new MeasureIntensity().getNamesMeasurement(), imh);
         double sum = results.stream().map(arr -> arr[1]).reduce(0.0, Double::sum);
-        System.out.println("NB "+dotsPop.getNbObjects()+" sum of intensity "+sum);
+        System.out.println("Sum of intensity "+sum);
         return(sum);
     }
 
@@ -405,8 +396,6 @@ public class Tools {
             // find population
             Objects3DIntPopulation nucPop = getPopFromClearBuffer(labelsSizeFilter);
             clij2.release(labelsSizeFilter);
-            nucPop.setResXY(cal.pixelWidth);
-            nucPop.setResZ(cal.pixelDepth);
             return(nucPop);
         }
     
@@ -421,8 +410,6 @@ public class Tools {
         ClearCLBuffer imgCLBin = threshold(imgMed, thMethod);
         clij2.release(imgMed);
         Objects3DIntPopulation astroPop = getPopFromClearBuffer(imgCLBin);
-        astroPop.setResXY(cal.pixelWidth);
-        astroPop.setResZ(cal.pixelDepth);
         clij2.release(imgCLBin);
         return(astroPop);
     }    
@@ -449,8 +436,6 @@ public class Tools {
         ClearCLBuffer maskCL = clij2.push(imgBin);
         Objects3DIntPopulation dotsPop = getPopFromClearBuffer(maskCL);
         clij2.release(maskCL);
-        dotsPop.setResXY(cal.pixelWidth);
-        dotsPop.setResZ(cal.pixelDepth);
         flush_close(imgBin);
         return(dotsPop);
      }
@@ -480,8 +465,6 @@ public class Tools {
         ClearCLBuffer maskCL = clij2.push(imgBin);
         Objects3DIntPopulation dotsPop = getPopFromClearBuffer(maskCL);
         clij2.release(maskCL);
-        dotsPop.setResXY(cal.pixelWidth);
-        dotsPop.setResZ(cal.pixelDepth);
         flush_close(imgBin);
         return(dotsPop);
      }
@@ -499,11 +482,11 @@ public class Tools {
         for (Object3DInt dot : dotsPop.getObjects3DInt()) {
             double[] colocVal = coloc.getValuesObject1(dot.getValue());
             if(colocVal.length > 0) {
+                dot.setResXY(cal.pixelWidth);
+                dot.setResZ(cal.pixelDepth);
                 dotsCellPop.addObject(dot);
             }
         }
-        dotsCellPop.setResXY(cal.pixelWidth);
-        dotsCellPop.setResZ(cal.pixelDepth);
         return(dotsCellPop);
     } 
     

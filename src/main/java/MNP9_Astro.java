@@ -194,11 +194,11 @@ public class MNP9_Astro implements PlugIn {
                 // Save image objects
                 tools.saveImgObjects(nucPop, astroPop, MNP9Pop, rootName+"_Objects.tif", imgMNP9, outDirResults);
                 tools.flush_close(imgMNP9);
-                
+           
                 // write data
                 nucleus_Analyze.write(rootName+"\t"+secVol+"\t"+nuc+"\t"+MNP9Dots+"\t"+MNP9Vol+"\t"+MNP9Int+"\t"+MNP9_NucDots+"\t"+MNP9_NucVol+"\t"+MNP9_NucInt+"\t"+
                         astroVol+"\t"+MNP9_AstroDots+"\t"+MNP9_AstroVol+"\t"+MNP9_AstroInt+"\t"+MNP9_OutNucDots+"\t"+MNP9_OutNucVol+"\t"+MNP9_OutNucInt+"\t"+
-                        MNP9_OutAstroDots+"\t"+MNP9_OutAstroVol+"\t"+MNP9_OutAstroInt+MNP9_OutCellsDots+"\t"+MNP9_OutCellsVol+"\t"+MNP9_OutCellsInt+"\n");
+                        MNP9_OutAstroDots+"\t"+MNP9_OutAstroVol+"\t"+MNP9_OutAstroInt+"\t"+MNP9_OutCellsDots+"\t"+MNP9_OutCellsVol+"\t"+MNP9_OutCellsInt+"\n");
                 nucleus_Analyze.flush();
             }
         } 

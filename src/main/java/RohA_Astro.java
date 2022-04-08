@@ -198,7 +198,7 @@ public class RohA_Astro implements PlugIn {
                 // write data
                 nucleus_Analyze.write(rootName+"\t"+secVol+"\t"+nuc+"\t"+RohADots+"\t"+RohAVol+"\t"+RohAInt+"\t"+RohA_NucDots+"\t"+RohA_NucVol+"\t"+RohA_NucInt+"\t"+
                         astroVol+"\t"+RohA_AstroDots+"\t"+RohA_AstroVol+"\t"+RohA_AstroInt+"\t"+RohA_OutNucDots+"\t"+RohA_OutNucVol+"\t"+RohA_OutNucInt+"\t"+
-                        RohA_OutAstroDots+"\t"+RohA_OutAstroVol+"\t"+RohA_OutAstroInt+RohA_OutCellsDots+"\t"+RohA_OutCellsVol+"\t"+RohA_OutCellsInt+"\n");
+                        RohA_OutAstroDots+"\t"+RohA_OutAstroVol+"\t"+RohA_OutAstroInt+"\t"+RohA_OutCellsDots+"\t"+RohA_OutCellsVol+"\t"+RohA_OutCellsInt+"\n");
                 nucleus_Analyze.flush();
             }
         } 
