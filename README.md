@@ -5,8 +5,6 @@
 * **Date:** April 2022
 * **Software:** Fiji
 
-
-
 ### Images description
 
 3D images
@@ -17,6 +15,8 @@
   3. MMP9 or RhoA
 
 ### Plugin description
+
+#### Plugin 1: MNP9_NeuN
 
 * Detect NeuN and PV (if corresponding channel provided) cells with Cellpose
 * Compute their colocalization
