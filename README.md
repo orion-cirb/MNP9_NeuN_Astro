@@ -1,6 +1,6 @@
 # MNP9_NeuN_Astro
 
-* **Developed for:** 
+* **Developed for:** Rachel
 * **Team:** Rouach
 * **Date:** April 2022
 * **Software:** Fiji
